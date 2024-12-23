@@ -165,6 +165,8 @@
       ansible.builtin.git:
         repo: https://github.com/BGrootjans/EasyTicketing.git
         dest: /home/ansible01/env_files
+        single_branch: yes
+        version: master
 
     - name: Copy environment file 
       ansible.builtin.copy:
@@ -182,3 +184,48 @@
           - /home/ansible01/opt/otobo-docker/docker-compose/otobo-base.yml
           - /home/ansible01/opt/otobo-docker/docker-compose/otobo-override-http.yml
         state: present
+
+- name: Install and configure Zabbix agent
+  hosts: EasyTicketing
+  gather_facts: false
+  become: true
+  vars:
+    zabbix_config_file: /etc/zabbix/zabbix_agentd.conf
+    zabbix_server_ip: 192.168.2.100
+  tasks:
+    - name: Download the Zabbix repository package
+      ansible.builtin.get_url:
+        url: "https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_6.0+ubuntu24.04_all.deb"
+        dest: /tmp/zabbix-release_latest.deb
+
+    - name: Install the Zabbix repository package
+      ansible.builtin.apt:
+        deb: /tmp/zabbix-release_latest.deb
+        update_cache: true
+
+    - name: Install Zabbix agent
+      ansible.builtin.apt:
+        name: zabbix-agent
+        state: present
+        update_cache: true
+
+    - name: Configure Zabbix Agent file
+      ansible.builtin.lineinfile:
+        path: "{{ zabbix_config_file }}"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '^Server=', line: "Server={{ zabbix_server_ip }}" }
+        - { regexp: '^ServerActive=', line: "ServerActive={{ zabbix_server_ip }}" }
+        - { regexp: '^Hostname=', line: "Hostname={{ ansible_hostname }}" }
+    
+    - name: Restart Zabbix agent
+      ansible.builtin.systemd:
+        name: zabbix-agent
+        state: restarted
+
+    - name: Enable Zabbix agent service
+      ansible.builtin.systemd:
+        name: zabbix-agent
+        enabled: true
