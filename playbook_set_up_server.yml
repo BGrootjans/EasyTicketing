@@ -1,0 +1,184 @@
+---
+- name: Configure environment
+  hosts: EasyTicketing
+  gather_facts: yes
+  become: true
+
+  tasks:
+    - name: Update Ubuntu LTS
+      ansible.builtin.apt:
+        name: "*"
+        state: latest
+
+    - name: Set timezone    
+      community.general.timezone:
+        name: Europe/Brussels
+
+- name: Install Docker on Ubuntu
+  hosts: EasyTicketing
+  gather_facts: false
+  become: true
+  vars:
+    arch_mapping:
+      x86_64: amd64
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - software-properties-common
+
+    - name: Create directory for Docker's GPG key
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Add Docker's official GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        keyring: /etc/apt/keyrings/docker.gpg
+        state: present
+
+    - name: Print architecture variables
+      ansible.builtin.debug:
+        msg: "Architecture: {{ ansible_architecture }}, Codename: {{ ansible_lsb.codename }}"
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch={{ arch_mapping[ansible_architecture] | default(ansible_architecture) }}
+          signed-by=/etc/apt/keyrings/docker.gpg]
+          https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+        filename: docker
+        state: present
+
+    - name: Install Docker and related packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+
+    - name: Add Docker group
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add user to Docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: true
+
+    - name: Enable and start Docker services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - docker.service
+        - containerd.service
+
+- name: Install and set up AWS CLI 
+  hosts: EasyTicketing
+  gather_facts: false
+  become: true
+  vars:
+    aws_system_user: ansible01
+    aws_access_key: !!
+    aws_secret_key: !!
+    aws_region: eu-central-1
+    aws_format: json
+  tasks:
+    - name: Install package dependencies.
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: true
+      loop:
+        - python3
+        - unzip
+
+    - name: Install AWS CLI v2
+      ansible.builtin.shell: |
+        if ! command -v aws &> /dev/null; then
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "/tmp/awscliv2.zip"
+          unzip -o /tmp/awscliv2.zip -d /tmp
+          sudo /tmp/aws/install
+        fi
+      args:
+        executable: /bin/bash
+      changed_when: false
+
+    - name: Configure AWS
+      no_log: true
+      ansible.builtin.shell: |
+        aws configure set {{ item.key }} {{ item.value }}
+      with_items:
+        - { key: "aws_access_key_id", value: "{{ aws_access_key }}" }
+        - { key: "aws_secret_access_key", value: "{{ aws_secret_key }}" }
+        - { key: "region", value: "{{ aws_region }}" }
+        - { key: "output", value: "{{ aws_format }}" }
+      changed_when: false
+
+- name: Create backup directory and sync with S3 bucket 
+  hosts: EasyTicketing
+  gather_facts: false
+  tasks:
+    - name: Create backup directory
+      ansible.builtin.file:
+        path: /home/ansible01/otobo_backup
+        state: directory
+        owner: ansible01
+        group: ansible01
+
+    - name: Map docker volume
+      ansible.builtin.shell:
+        docker volume create --name otobo_backup --opt type=none --opt device=/home/ansible01/otobo_backup --opt o=bind
+
+    - name: sync with AWS s3 bucket
+      ansible.builtin.shell:
+        aws s3 sync s3://backup.easyticketing /home/ansible01/otobo_backup
+
+- name: Set up docker environment and start containers
+  hosts: EasyTicketing
+  gather_facts: false
+  tasks:
+    - name: Clone containers from git
+      ansible.builtin.git:
+        repo: https://github.com/RotherOSS/otobo-docker.git
+        dest: /home/ansible01/opt/otobo-docker
+        single_branch: yes
+        version: rel-11_0_7
+
+    - name: Clone environment files from git
+      ansible.builtin.git:
+        repo: https://github.com/BGrootjans/EasyTicketing.git
+        dest: /home/ansible01/env_files
+
+    - name: Copy environment file 
+      ansible.builtin.copy:
+        src: /home/ansible01/env_files/.env
+        dest: /home/ansible01/opt/otobo-docker/docker-compose/.env
+        owner: ansible01
+        group: ansible01
+        mode: '0755'
+        remote_src: yes
+    
+    - name: Build and start containers using Docker Compose
+      community.docker.docker_compose_v2:
+        project_src: /home/ansible01/opt/otobo-docker/docker-compose
+        files:
+          - /home/ansible01/opt/otobo-docker/docker-compose/otobo-base.yml
+          - /home/ansible01/opt/otobo-docker/docker-compose/otobo-override-http.yml
+        state: present
