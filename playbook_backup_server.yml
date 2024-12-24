@@ -1,0 +1,58 @@
+---
+- name: Setup crontab for Otobo backups and S3 sync
+  hosts: EasyTicketing
+  gather_facts: true
+  tasks:
+    - name: Set PATH environment variable for crontab
+      ansible.builtin.lineinfile:
+        path: "/var/spool/cron/crontabs/{{ ansible_user }}"
+        line: "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        state: present
+        create: yes
+        owner: "{{ ansible_user }}"
+        group: crontab
+        mode: "0600"
+
+    - name: Add Otobo backup job to crontab
+      ansible.builtin.cron:
+        name: "Otobo backup"
+        minute: "0"
+        hour: "*"
+        job: "/usr/bin/docker run --rm --volume otobo_opt_otobo:/opt/otobo --volume otobo_backup:/otobo_backup --network otobo_default rotheross/otobo:latest-11_0 scripts/backup.pl --extra-dump-options=\"--single-transaction\" -d /otobo_backup >/dev/null 2>&1"
+
+    - name: Add AWS S3 sync job to crontab
+      ansible.builtin.cron:
+        name: "AWS S3 sync for Otobo backups"
+        minute: "15"
+        hour: "*"
+        job: "/usr/local/bin/aws s3 sync /home/admin01/otobo_backup s3://backup.easyticketing/ --delete >/dev/null 2>&1"
+
+- name: Manage backup folder cleanup and schedule cron job
+  hosts: EasyTicketing
+  gather_facts: true
+  vars:
+    backup_directory: "/home/ansible01/otobo_backup"  
+    cleanup_script_path: "/home/ansible01/cleanup_backups.sh"
+
+  tasks:
+    - name: Create the backup cleanup script
+      ansible.builtin.copy:
+        dest: "{{ cleanup_script_path }}"
+        content: |
+          #!/bin/bash
+          # Cleanup script to keep only the last 5 backups
+          BACKUP_DIR="{{ backup_directory }}"
+          if [ -d "$BACKUP_DIR" ]; then
+              find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | sort | head -n -9 | xargs -r rm -rf
+          fi
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Add cron job for backup cleanup
+      ansible.builtin.cron:
+        name: "Cleanup old backup folders"
+        minute: "10"
+        hour: "*"  
+        job: "{{ cleanup_script_path }} > /dev/null 2>&1"
+
