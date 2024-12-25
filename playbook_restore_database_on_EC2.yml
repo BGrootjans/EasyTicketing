@@ -1,0 +1,62 @@
+---
+- name: Restore Otobo database from S3 on EasyTicketing server
+  hosts: easyticketing_server
+  gather_facts: false
+
+  tasks:
+    - name: Sync S3 backup to otobo_backup directory
+      ansible.builtin.command:
+        cmd: aws s3 sync s3://backup.easyticketing /home/ubuntu/otobo_backup
+      register: s3_sync
+      changed_when: "'downloaded' in s3_sync.stdout or 'copied' in s3_sync.stdout"
+
+    - name: Find the youngest directory in otobo_backup
+      ansible.builtin.shell: |
+        find /home/ubuntu/otobo_backup -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' |
+        sort -n | tail -1 | awk '{print $2}'
+      register: youngest_directory
+      changed_when: false
+
+    - name: Check if the youngest directory was found before proceeding
+      ansible.builtin.fail:
+        msg: "No backup directory found in otobo_backup"
+      when: 
+        - youngest_directory.stdout is not defined
+        - youngest_directory.stdout | length == 0
+
+    - name: Check if DatabaseBackup.sql exists before unzipping
+      ansible.builtin.stat:
+        path: "{{ youngest_directory.stdout }}/DatabaseBackup.sql"
+      register: db_backup_sql_exists
+
+    - name: Unzip the DatabaseBackup.sql.gz file using gunzip
+      ansible.builtin.command:
+        cmd: gunzip {{ youngest_directory.stdout }}/DatabaseBackup.sql.gz
+        chdir: "{{ youngest_directory.stdout }}"
+      when: 
+        - db_backup_sql_exists.stat.exists == false  # Proceed only if DatabaseBackup.sql does not exist
+
+    - name: Check if DatabaseBackup.sql exists in the container
+      community.docker.docker_container_exec:
+        container: otobo_db_1
+        command: "sh -c 'test -f /DatabaseBackup.sql'"
+      register: db_backup_sql_exists_in_container
+      ignore_errors: true  # In case the folder doesn't exist, we want to continue
+
+    - name: Copy DatabaseBackup.sql to Docker container
+      ansible.builtin.command:
+        cmd: docker cp {{ youngest_directory.stdout }}/DatabaseBackup.sql otobo_db_1:/DatabaseBackup.sql
+      when: db_backup_sql_exists_in_container.rc != 0  # Proceed only if the file does not exist in the container
+
+    - name: Restore database from backup
+      community.docker.docker_container_exec:
+        container: otobo_db_1
+        command: "sh -c 'mysql -u root -p\"otobo\" otobo < /DatabaseBackup.sql'"
+      when: db_backup_sql_exists_in_container.rc != 1  # Proceed only if the file does exist in the container
+
+    - name: Clean up DatabaseBackup.sql inside otobo_db_1 container
+      community.docker.docker_container_exec:
+        container: otobo_db_1
+        user: root
+        command: "sh -c 'rm -f /DatabaseBackup.sql'"
+      when: db_backup_sql_exists_in_container.rc != 1  # Proceed only if the file does exist in the container
