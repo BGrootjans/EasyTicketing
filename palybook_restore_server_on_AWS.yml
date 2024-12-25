@@ -1,0 +1,70 @@
+---
+- name: Create EC2 instance from ami
+  hosts: localhost
+  gather_facts: false
+  vars:
+    aws_region: "eu-central-1"  
+    ec2_keypair: "EasyTicketing"  
+    ec2_ami: "ami-0680126a15874aec1"  
+    ec2_instance_type: "t2.small"
+    ec2_security_group: "sg-027a786ad4894a39b" 
+    ec2_vpc_subnet: "subnet-00e7d4d2b6bd323e9"
+    ec2_storage_size: 15
+    iam_instance_profile_name: "EC2_standard" 
+    ec2_name: "easyticketing_server"
+    inventory_dir: etc/ansible
+    private_key_file_location: /home/master/easyticketing/EasyTicketing.pem
+
+  tasks:
+    - name: Launch EC2 instance
+      community.aws.ec2_instance:
+        name: "{{ ec2_name }}"
+        key_name: "{{ ec2_keypair }}"
+        instance_type: "{{ ec2_instance_type }}"
+        image_id: "{{ ec2_ami }}"
+        vpc_subnet_id: "{{ ec2_vpc_subnet }}"
+        security_groups: [ "{{ ec2_security_group }}" ]
+        region: "{{ aws_region }}"
+        iam_instance_profile: "{{ iam_instance_profile_name }}"
+        wait: yes
+        network_interfaces:
+          - device_index: 0
+            assign_public_ip: true
+        volumes:
+          - device_name: /dev/xvda
+            ebs:
+              volume_size: "{{ ec2_storage_size }}"
+              volume_type: gp2
+              delete_on_termination: true
+      register: ec2_instance
+
+    - name: Attach Elastic IP
+      community.aws.ec2_eip:
+        device_id: "{{ ec2_instance.instance_ids[0] }}"
+        region: "{{ aws_region }}"
+        state: present
+      register: eip
+
+    - name: Add EC2 instance to /etc/ansible/hosts
+      ansible.builtin.blockinfile:
+        path: /etc/ansible/hosts
+        create: yes
+        block: |
+          [{{ ec2_name }}]
+          {{ eip.public_ip }}
+      
+          [{{ ec2_name }}:vars]
+          ansible_user=ubuntu
+          ansible_ssh_private_key_file={{ private_key_file_location }}
+          ansible_python_interpreter=/usr/bin/python3
+        owner: root
+        group: root
+        mode: '0644'
+        state: present
+      become: yes
+
+    - name: Output EC2 details
+      debug:
+        msg:
+          - "Instance ID: {{ ec2_instance.instance_ids[0] }}"
+          - "Elastic IP: {{ eip.public_ip }}"
