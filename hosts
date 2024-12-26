@@ -1,0 +1,17 @@
+[localhost]
+192.168.2.100
+
+[localhost:vars]
+ansible_connection=local
+ansible_become_user=root 
+ansible_become_password=Ubuntu@24
+ansible_python_interpreter=/usr/bin/python3
+
+[EasyTicketing]
+192.168.2.xxx
+
+[EasyTicketing:vars]
+ansible_connection=ssh 
+ansible_user=ansible01 
+ansible_become_user=root 
+ansible_become_password=Ubuntu@24
