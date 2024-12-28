@@ -1,0 +1,28 @@
+---
+- name: Manage Windows 10
+  hosts: EasyTicketing_windows
+  gather_facts: false
+  vars:
+    user_password: "Ubuntu@24"
+    user_name: "ansible01"
+    favorite_link: "http://192.168.2.133/otobo/customer.pl"
+  tasks:
+    - name: Create a new user
+      ansible.windows.win_user:
+        name: "{{ user_name }}"
+        password: "{{ user_password }}"
+        groups: Users
+        state: present
+
+    - name: Install Firefox using Chocolatey
+      win_chocolatey:
+        name: firefox
+        state: present
+      register: firefox_install
+
+    - name: Create a shortcut in the Default User's Desktop
+      ansible.windows.win_copy:
+        content: |
+          [InternetShortcut]
+          URL= {{ favorite_link }}
+        dest: "C:\\Users\\Default\\Desktop\\Otobo_tickets.url"
