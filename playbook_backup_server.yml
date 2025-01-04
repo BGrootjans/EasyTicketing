@@ -2,17 +2,17 @@
 - name: Setup crontab for Otobo backups and S3 sync
   hosts: EasyTicketing
   gather_facts: true
-  become: true
   tasks:
     - name: Set PATH environment variable for crontab
       ansible.builtin.lineinfile:
-        path: "/var/spool/cron/crontabs/root"
+        path: /var/spool/cron/crontabs/ansible01
         line: "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         state: present
         create: yes
-        owner: root
-        group: crontab
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
         mode: "0600"
+      become: true
 
     - name: Add Otobo backup job to crontab
       ansible.builtin.cron:
@@ -26,11 +26,11 @@
         name: "AWS S3 sync for Otobo backups"
         minute: "15"
         hour: "*"
-        job: "/usr/local/bin/aws s3 sync /home/admin01/otobo_backup s3://backup.easyticketing/ --delete >/dev/null 2>&1"
+        job: "/usr/local/bin/aws s3 sync /home/ansible01/otobo_backup s3://backup.easyticketing/ --delete >/dev/null 2>&1"
 
 - name: Manage backup folder cleanup and schedule cron job
   hosts: EasyTicketing
-  gather_facts: true
+  gather_facts: false
   vars:
     backup_directory: "/home/ansible01/otobo_backup"  
     cleanup_script_path: "/home/ansible01/cleanup_backups.sh"
@@ -41,7 +41,7 @@
         dest: "{{ cleanup_script_path }}"
         content: |
           #!/bin/bash
-          # Cleanup script to keep only the last 5 backups
+          # Cleanup script to keep only the last 9 backups
           BACKUP_DIR="{{ backup_directory }}"
           if [ -d "$BACKUP_DIR" ]; then
               find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d | sort | head -n -9 | xargs -r rm -rf
