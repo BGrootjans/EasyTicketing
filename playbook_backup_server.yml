@@ -2,14 +2,15 @@
 - name: Setup crontab for Otobo backups and S3 sync
   hosts: EasyTicketing
   gather_facts: true
+  become: true
   tasks:
     - name: Set PATH environment variable for crontab
       ansible.builtin.lineinfile:
-        path: "/var/spool/cron/crontabs/{{ ansible_user }}"
+        path: "/var/spool/cron/crontabs/root"
         line: "PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
         state: present
         create: yes
-        owner: "{{ ansible_user }}"
+        owner: root
         group: crontab
         mode: "0600"
 
@@ -55,4 +56,3 @@
         minute: "10"
         hour: "*"  
         job: "{{ cleanup_script_path }} > /dev/null 2>&1"
-
