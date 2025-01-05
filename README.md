@@ -40,16 +40,53 @@ The `files` branch includes additional resources for deployment and management:
 ## How to Use
 
 ### Prerequisites
-Ensure the following are installed:
+Ensure the following are installed on a Ubuntu LTS:
 - **Ansible** (for playbook execution)
 - **AWS CLI** (for managing AWS resources)
-- **Zabbix Agent** (for monitoring integration)
+- **Zabbix server** (for monitoring integration)
+- **Fix IP** 192.168.2.100
 
 ### Setup and Configuration
 1. Clone the repository:
    ```bash
    git clone --single-branch --branch files https://github.com/BGrootjans/EasyTicketing.git
    cd EasyTicketing
+
+
+### Running Playbooks
+- Set Up a Server:
+  ```bash
+  ansible-playbook playbook_set_up_server.yml -i hosts
+
+- Backup a Server:
+  ```bash
+  ansible-playbook playbook_backup_server.yml -i hosts
+
+- Restore a Server on AWS:
+  ```bash
+  ansible-playbook palybook_restore_server_on_AWS.yml -i hosts
+
+- Restore a Database on EC2:
+  ```bash
+  ansible-playbook playbook_restore_database_on_EC2.yml -i hosts
+
+- Set Up a Client
+  ```bash
+  ansible-playbook playbook_client_set_up.yml -i hosts
+
+### Monitoring with Zabbix
+The repository includes the `zabbix_agentd.conf` file for integrating with Zabbix monitoring. The necessary steps to deploy the Zabbix configuration and start the Zabbix agent service are automated as part of the `playbook_set_up_server.yml` Ansible playbook.
+
+To set up Zabbix monitoring:
+1. Run the server setup playbook:
+   ```bash
+   ansible-playbook playbook_client_set_up.yml -i hosts
+
+2. Verify that the Zabbix agent service is running on the target server:
+   ```bash
+   ansible-playbook playbook_client_set_up.yml -i hosts
+
+
 
 
 
