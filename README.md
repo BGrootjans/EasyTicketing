@@ -45,6 +45,8 @@ Ensure the following are installed on a Ubuntu LTS:
 - **AWS CLI** (for managing AWS resources)
 - **Zabbix server** (for monitoring integration)
 - **Fix IP** 192.168.2.100
+Ensure following service are available:
+- **2 mailaccounts** (for seting up application itself)
 
 ### Setup and Configuration
 1. Clone the repository:
@@ -68,6 +70,7 @@ Ensure the following are installed on a Ubuntu LTS:
 - Set Up a Client
   ```bash
   ansible-playbook playbook_client_set_up.yml -i hosts
+  
 ### Monitoring with Zabbix
 The repository includes the `zabbix_agentd.conf` file for integrating with Zabbix monitoring. The necessary steps to deploy the Zabbix configuration and start the Zabbix agent service are automated as part of the `playbook_set_up_server.yml` Ansible playbook.
 
@@ -75,7 +78,6 @@ To set up Zabbix monitoring:
 1. Run the server setup playbook:
    ```bash
    ansible-playbook playbook_client_set_up.yml -i hosts
-
 2. Verify that the Zabbix agent service is running on the target server:
    ```bash
    ansible-playbook playbook_client_set_up.yml -i hosts
@@ -83,8 +85,23 @@ To set up Zabbix monitoring:
 ---
 
 ## Contribution
+We welcome contributions to the EasyTicketing project. Please:
 
+1. Fork the repository.
+2. Create a feature branch:
+   ```bash
+   git checkout -b feature/your-feature
+3. Submit a pull request.
 
+---
+
+## License
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## Suport
+For any questions or issues, please raise an issue in the repository or contact master@easytickeing.net.
 
 
 
