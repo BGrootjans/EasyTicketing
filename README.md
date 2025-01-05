@@ -53,6 +53,8 @@ Ensure following service are available:
    ```bash
    git clone --single-branch --branch files https://github.com/BGrootjans/EasyTicketing.git
    cd EasyTicketing
+2. Replace Ansible config file with `ansible.cfg`
+3. Edit the Ansible host file, use `hosts` as example
 
 ### Running Playbooks
 - Set Up a Server:
