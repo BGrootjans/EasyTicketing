@@ -8,13 +8,13 @@ EasyTicketing provides tools and configurations for setting up, backing up, and 
 
 ### **Master Branch**
 The `master` branch contains the core repository files, including:
-- .env # Environment configuration file
+- .env # Environment configuration file for docker containers
 - README.md # Project documentation
 - zabbix_agentd.conf # Configuration file for Zabbix agent
 
 ### **Files Branch**
 The `files` branch includes additional resources for deployment and management:
-- .env # Environment configuration file
+- .env # Environment configuration file for docker containers
 - ansible.cfg # Ansible configuration file
 - hosts # Ansible inventory file
 - palybook_restore_server_on_AWS.yml #Playbook to restore a server on AWS
@@ -48,8 +48,10 @@ Ensure the following are installed:
 ### Setup and Configuration
 1. Clone the repository:
    ```bash
-   git clone https://github.com/BGrootjans/EasyTicketing.git
+   git clone --single-branch --branch files https://github.com/BGrootjans/EasyTicketing.git
    cd EasyTicketing
+
+
 
 
 
