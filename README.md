@@ -52,7 +52,6 @@ Ensure the following are installed on a Ubuntu LTS:
    git clone --single-branch --branch files https://github.com/BGrootjans/EasyTicketing.git
    cd EasyTicketing
 
-
 ### Running Playbooks
 - Set Up a Server:
   ```bash
@@ -86,7 +85,9 @@ To set up Zabbix monitoring:
    ```bash
    ansible-playbook playbook_client_set_up.yml -i hosts
 
+---
 
+## How to Use
 
 
 
