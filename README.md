@@ -5,6 +5,7 @@ EasyTicketing provides tools and configurations for setting up, backing up, and 
 ## Overview
 ![Alt text](https://github.com/BGrootjans/EasyTicketing/blob/master/Diagram%20Easyticketing.jpg)
 
+---
 
 ## Repository Structure
 
@@ -26,9 +27,6 @@ The `files` branch includes additional resources for deployment and management:
 - playbook_set_up_server.yml # Playbook to set up a server
 - zabbix_agentd.conf # Updated configuration file for Zabbix agent
 
-
----
-
 ## Key Features
 
 - **Server Setup**: Includes playbooks for setting up both servers and clients for the EasyTicketing system.
@@ -36,8 +34,6 @@ The `files` branch includes additional resources for deployment and management:
 - **Monitoring Integration**: Configures Zabbix agents to monitor system health and performance.
 - **Environment Configuration**: `.env` file for environment-specific variables and settings.
 - **Ansible-Driven Automation**: Fully automated infrastructure management using Ansible.
-
----
 
 ## How to Use
 
@@ -98,12 +94,8 @@ We welcome contributions to the EasyTicketing project. Please:
    git checkout -b feature/your-feature
 3. Submit a pull request.
 
----
-
 ## License
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
----
 
 ## Support
 For any questions or issues, please raise an issue in the repository or contact master@easytickeing.net.
