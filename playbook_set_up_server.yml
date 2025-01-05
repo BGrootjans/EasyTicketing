@@ -92,7 +92,6 @@
 - name: Install and set up AWS CLI 
   hosts: EasyTicketing
   gather_facts: false
-  become: true
   vars:
     aws_system_user: ansible01
     aws_access_key: !!
@@ -108,6 +107,7 @@
       loop:
         - python3
         - unzip
+      become: true
 
     - name: Install AWS CLI v2
       ansible.builtin.shell: |
@@ -119,6 +119,7 @@
       args:
         executable: /bin/bash
       changed_when: false
+      become: true
 
     - name: Configure AWS
       no_log: true
@@ -135,31 +136,45 @@
   hosts: EasyTicketing
   gather_facts: false
   tasks:
+    - name: Check if backup directory exists
+      ansible.builtin.stat:
+        path: /home/ansible01/otobo_backup
+      register: backup_directory
+
     - name: Create backup directory
       ansible.builtin.file:
         path: /home/ansible01/otobo_backup
         state: directory
         owner: ansible01
         group: ansible01
+      when: not backup_directory.stat.exists
 
     - name: Map docker volume
       ansible.builtin.shell:
         docker volume create --name otobo_backup --opt type=none --opt device=/home/ansible01/otobo_backup --opt o=bind
+      when: not backup_directory.stat.exists
 
     - name: sync with AWS s3 bucket
       ansible.builtin.shell:
         aws s3 sync s3://backup.easyticketing /home/ansible01/otobo_backup
+      when: not backup_directory.stat.exists
 
 - name: Set up docker environment and start containers
   hosts: EasyTicketing
   gather_facts: false
   tasks:
+    - name: Check if container directory exists
+      ansible.builtin.stat:
+        path: /home/ansible01/otobo_backup
+      register: container_directory
+
     - name: Clone containers from git
       ansible.builtin.git:
         repo: https://github.com/RotherOSS/otobo-docker.git
         dest: /home/ansible01/opt/otobo-docker
         single_branch: yes
         version: rel-11_0_7
+      when: not container_directory.stat.exists
 
     - name: Clone environment files from git
       ansible.builtin.git:
@@ -167,6 +182,7 @@
         dest: /home/ansible01/env_files
         single_branch: yes
         version: master
+      when: not container_directory.stat.exists
 
     - name: Copy environment file 
       ansible.builtin.copy:
@@ -176,6 +192,7 @@
         group: ansible01
         mode: '0755'
         remote_src: yes
+      when: not container_directory.stat.exists
     
     - name: Build and start containers using Docker Compose
       community.docker.docker_compose_v2:
@@ -193,10 +210,16 @@
     zabbix_config_file: /etc/zabbix/zabbix_agentd.conf
     zabbix_server_ip: 192.168.2.100
   tasks:
+    - name: Check if the Zabbix package already exists
+      ansible.builtin.stat:
+        path: /tmp/zabbix-release_latest.deb
+      register: zabbix_package
+
     - name: Download the Zabbix repository package
       ansible.builtin.get_url:
         url: "https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_6.0+ubuntu24.04_all.deb"
         dest: /tmp/zabbix-release_latest.deb
+      when: not zabbix_package.stat.exists
 
     - name: Install the Zabbix repository package
       ansible.builtin.apt:
@@ -218,14 +241,15 @@
       loop:
         - { regexp: '^Server=', line: "Server={{ zabbix_server_ip }}" }
         - { regexp: '^ServerActive=', line: "ServerActive={{ zabbix_server_ip }}" }
-        - { regexp: '^Hostname=', line: "Hostname={{ ansible_hostname }}" }
     
     - name: Restart Zabbix agent
       ansible.builtin.systemd:
         name: zabbix-agent
         state: restarted
+      when: not zabbix_package.stat.exists
 
     - name: Enable Zabbix agent service
       ansible.builtin.systemd:
         name: zabbix-agent
-        enabled: true
+        enabled: true 
+...
