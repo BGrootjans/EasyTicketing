@@ -98,7 +98,7 @@ We welcome contributions to the EasyTicketing project. Please:
 This project is licensed under the MIT License. See the `LICENSE` file for details.
 
 ## Support
-For any questions or issues, please raise an issue in the repository or contact master@easytickeing.net.
+For any questions or issues, please raise an issue in the repository or contact master@easyticketing.net.
 
 
 
