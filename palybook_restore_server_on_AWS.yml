@@ -68,3 +68,4 @@
         msg:
           - "Instance ID: {{ ec2_instance.instance_ids[0] }}"
           - "Elastic IP: {{ eip.public_ip }}"
+...
