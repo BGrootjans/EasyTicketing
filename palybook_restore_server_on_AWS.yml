@@ -38,6 +38,10 @@
               delete_on_termination: true
       register: ec2_instance
 
+    - name: Pause the playbook for 30 seconds
+      ansible.builtin.pause:
+        seconds: 30
+
     - name: Attach Elastic IP
       community.aws.ec2_eip:
         device_id: "{{ ec2_instance.instance_ids[0] }}"
