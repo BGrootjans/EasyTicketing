@@ -100,7 +100,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ---
 
-## Suport
+## Support
 For any questions or issues, please raise an issue in the repository or contact master@easytickeing.net.
 
 
