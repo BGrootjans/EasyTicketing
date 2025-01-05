@@ -12,6 +12,7 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0600"
+        regexp: "^PATH="
       become: true
 
     - name: Add Otobo backup job to crontab
@@ -56,3 +57,4 @@
         minute: "10"
         hour: "*"  
         job: "{{ cleanup_script_path }} > /dev/null 2>&1"
+...
