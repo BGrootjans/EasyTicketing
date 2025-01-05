@@ -56,23 +56,18 @@ Ensure the following are installed on a Ubuntu LTS:
 - Set Up a Server:
   ```bash
   ansible-playbook playbook_set_up_server.yml -i hosts
-
 - Backup a Server:
   ```bash
   ansible-playbook playbook_backup_server.yml -i hosts
-
 - Restore a Server on AWS:
   ```bash
   ansible-playbook palybook_restore_server_on_AWS.yml -i hosts
-
 - Restore a Database on EC2:
   ```bash
   ansible-playbook playbook_restore_database_on_EC2.yml -i hosts
-
 - Set Up a Client
   ```bash
   ansible-playbook playbook_client_set_up.yml -i hosts
-
 ### Monitoring with Zabbix
 The repository includes the `zabbix_agentd.conf` file for integrating with Zabbix monitoring. The necessary steps to deploy the Zabbix configuration and start the Zabbix agent service are automated as part of the `playbook_set_up_server.yml` Ansible playbook.
 
@@ -87,7 +82,8 @@ To set up Zabbix monitoring:
 
 ---
 
-## How to Use
+## Contribution
+
 
 
 
