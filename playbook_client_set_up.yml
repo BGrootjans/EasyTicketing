@@ -26,3 +26,4 @@
           [InternetShortcut]
           URL= {{ favorite_link }}
         dest: "C:\\Users\\Default\\Desktop\\Otobo_tickets.url"
+...
