@@ -45,6 +45,7 @@ Ensure the following are installed on a Ubuntu LTS:
 - **AWS CLI** (for managing AWS resources)
 - **Zabbix server** (for monitoring integration)
 - **Fix IP** 192.168.2.100
+
 Ensure following service are available:
 - **2 mailaccounts** (for seting up application itself)
 
