@@ -54,6 +54,9 @@ Ensure following service are available:
    cd EasyTicketing
 2. Replace Ansible config file with `ansible.cfg`
 3. Edit the Ansible host file, use `hosts` as example
+4. Run the playbook(s)
+5. Go go through the installer
+      see documentation https://doc.otobo.org/
 
 ### Running Playbooks
 - Set Up a Server:
