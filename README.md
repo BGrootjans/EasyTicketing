@@ -46,6 +46,7 @@ Ensure the following are installed on a Ubuntu LTS:
 
 Ensure following services are available:
 - **2 mailaccounts** (for seting up application itself)
+- **AWS account** (for restore in the cloud)
 
 ### Setup and Configuration
 1. Clone the repository:
