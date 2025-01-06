@@ -44,7 +44,7 @@ Ensure the following are installed on a Ubuntu LTS:
 - **Zabbix server** (for monitoring integration)
 - **Fix IP** 192.168.2.100
 
-Ensure following service are available:
+Ensure following services are available:
 - **2 mailaccounts** (for seting up application itself)
 
 ### Setup and Configuration
@@ -55,7 +55,7 @@ Ensure following service are available:
 2. Replace Ansible config file with `ansible.cfg`
 3. Edit the Ansible host file, use `hosts` as example
 4. Run the playbook(s)
-5. Go go through the installer
+5. Go through the installer
       see documentation https://doc.otobo.org/
 
 ### Running Playbooks
