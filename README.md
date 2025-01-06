@@ -1,6 +1,6 @@
 # EasyTicketing
 
-EasyTicketing provides tools and configurations for setting up, backing up, and restoring ticketing systems. This repository includes Ansible playbooks, configuration files, and setup scripts for managing server environments and integrating monitoring tools like Zabbix.
+EasyTicketing provides tools and configurations for setting up, backing up, and restoring ticketing systems. This repository includes Ansible playbooks, configuration files, and setup scripts for managing server environments and integrating monitoring tools like Zabbix. The application itself used is OTOBO Ticketing (open-source), more info https://otobo.io/ .
 
 ## Overview
 ![Alt text](https://github.com/BGrootjans/EasyTicketing/blob/master/Diagram%20Easyticketing.jpg)
